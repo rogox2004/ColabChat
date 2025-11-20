@@ -3,13 +3,13 @@ const http = require('http');
 const socketIo = require('socket.io');
 const admin = require('firebase-admin');
 
-// Inicializar Firebase con las credenciales
+// Inicializar Firebase con las credenciales desde la variable de entorno
 admin.initializeApp({
-  credential: admin.credential.cert(require('../firebase-credentials.json')), // Asegúrate de la ruta correcta
-  databaseURL: 'https://chatcolabtech.firebaseio.com' // Cambia esto con tu ID de proyecto
+  credential: admin.credential.cert(JSON.parse(process.env.FIREBASE_CREDENTIALS)),
+  databaseURL: 'https://chatcolabtech.firebaseio.com'  // Asegúrate de usar la URL correcta de tu Firebase
 });
 
-// Crear el servidor express
+// Crear el servidor Express
 const app = express();
 const server = http.createServer(app);
 const io = socketIo(server);
@@ -44,10 +44,10 @@ io.on('connection', (socket) => {
   });
 });
 
-// La exportación que espera Vercel
+// Esta exportación es la que espera Vercel
 module.exports = (req, res) => {
-  server.listen(3000, () => {
-    console.log('Servidor WebSocket corriendo en el puerto 3000');
+  server.listen(process.env.PORT || 3000, () => {
+    console.log('Servidor WebSocket activo');
     res.send('Servidor WebSocket activo');
   });
 };
