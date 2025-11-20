@@ -1,4 +1,4 @@
-const socket = io();  // Conectar con el servidor WebSocket
+const socket = io("https://colabchat-production.up.railway.app");  // Conectar con el servidor WebSocket
 
 // Obtener el DOM
 const messageInput = document.getElementById('messageInput');
