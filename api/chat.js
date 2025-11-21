@@ -19,34 +19,31 @@ const io = socketIo(server, {
 
 const db = admin.firestore();
 
-// Servir frontend desde /public
-app.use(express.static(path.join(__dirname, '../public')));
+io.on("connection", (socket) => {
+  console.log("Usuario conectado:", socket.id);
 
-app.get("/", (req, res) => {
-  res.sendFile(path.join(__dirname, '../public/index.html'));
-});
+  // Cargar historial
+  socket.on("loadHistorial", async () => {
+    const snapshot = await db.collection("messages")
+      .orderBy("timestamp", "asc")
+      .get();
 
-// WebSocket
-io.on('connection', (socket) => {
-  console.log('Usuario conectado');
-
-  socket.on('mensaje', async (data) => {
-    console.log('Mensaje recibido:', data);
-
-    try {
-      await db.collection('messages').add({
-        text: data.text,
-        timestamp: admin.firestore.FieldValue.serverTimestamp(),
-      });
-
-      io.emit('mensaje', data);
-    } catch (error) {
-      console.error('Error Firestore:', error);
-    }
+    const historial = snapshot.docs.map(doc => doc.data());
+    socket.emit("historial", historial);
   });
 
-  socket.on('disconnect', () => {
-    console.log('Usuario desconectado');
+  // Nuevo mensaje
+  socket.on("mensaje", async (data) => {
+    const payload = {
+      text: data.text,
+      user: data.user,
+      photo: data.photo,
+      timestamp: admin.firestore.FieldValue.serverTimestamp()
+    };
+
+    await db.collection("messages").add(payload);
+
+    io.emit("mensaje", payload);
   });
 });
 

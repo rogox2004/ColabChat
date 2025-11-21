@@ -10,18 +10,32 @@
       display: flex;
       flex-direction: column;
       align-items: center;
-      margin-top: 50px;
+      margin-top: 30px;
     }
     #messages {
-      width: 300px;
-      height: 300px;
+      width: 320px;
+      height: 350px;
       border: 1px solid #ccc;
       padding: 10px;
       overflow-y: auto;
       margin-bottom: 10px;
     }
+    #chat {
+      display: none;
+    }
+    .user-info {
+      display: flex;
+      align-items: center;
+      gap: 10px;
+      margin-bottom: 10px;
+    }
+    .user-info img {
+      width: 35px;
+      height: 35px;
+      border-radius: 50%;
+    }
     input, button {
-      width: 300px;
+      width: 320px;
       padding: 10px;
       margin: 5px 0;
     }
@@ -29,12 +43,26 @@
 </head>
 <body>
   <h1>Chat en Vivo</h1>
-  <div id="messages"></div>
-  <input type="text" id="messageInput" placeholder="Escribe un mensaje..." />
-  <button id="sendMessage">Enviar</button>
+
+  <button id="loginBtn">Iniciar sesión con Google</button>
+
+  <div id="chat">
+    <div class="user-info">
+      <img id="userPhoto">
+      <span id="userName"></span>
+    </div>
+
+    <div id="messages"></div>
+
+    <input type="text" id="messageInput" placeholder="Escribe un mensaje..." />
+    <button id="sendMessage">Enviar</button>
+  </div>
+
+  <!-- Firebase -->
+  <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-app.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/10.4.0/firebase-auth.js"></script>
 
   <script src="https://cdn.socket.io/4.0.0/socket.io.min.js"></script>
   <script src="/app.js"></script>
 </body>
 </html>
-
