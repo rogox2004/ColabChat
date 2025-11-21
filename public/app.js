@@ -8,6 +8,7 @@ const firebaseConfig = {
 };
 firebase.initializeApp(firebaseConfig);
 const auth = firebase.auth();
+const db = firebase.firestore();
 
 let currentUser = null;
 
@@ -21,10 +22,8 @@ const socket = io("https://colabchat-production.up.railway.app");
 // =========================
 const loginBtn = document.getElementById("loginBtn");
 const chatDiv = document.getElementById("chat");
-
 const userPhoto = document.getElementById("userPhoto");
 const userName = document.getElementById("userName");
-
 const messageInput = document.getElementById("messageInput");
 const sendMessageButton = document.getElementById("sendMessage");
 const messagesDiv = document.getElementById("messages");
@@ -36,6 +35,7 @@ function showMessage(data) {
   const div = document.createElement("div");
   div.innerHTML = `<strong>${data.user}:</strong> ${data.text}`;
   messagesDiv.appendChild(div);
+  messagesDiv.scrollTop = messagesDiv.scrollHeight; // auto scroll
 }
 
 // =========================
@@ -43,7 +43,6 @@ function showMessage(data) {
 // =========================
 loginBtn.addEventListener("click", () => {
   const provider = new firebase.auth.GoogleAuthProvider();
-
   auth.signInWithPopup(provider)
     .then((result) => {
       currentUser = result.user;
@@ -54,9 +53,10 @@ loginBtn.addEventListener("click", () => {
       loginBtn.style.display = "none";
       chatDiv.style.display = "block";
 
+      // cargar historial
       socket.emit("loadHistorial");
     })
-    .catch(err => console.error(err));
+    .catch(err => console.error("Error login:", err));
 });
 
 // =========================
@@ -66,7 +66,6 @@ sendMessageButton.addEventListener("click", () => {
   if (!currentUser) return alert("Inicia sesión primero");
 
   const text = messageInput.value;
-
   if (text.trim() === "") return;
 
   const data = {
