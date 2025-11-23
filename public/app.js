@@ -33,9 +33,18 @@ const messagesDiv = document.getElementById("messages");
 // =========================
 function showMessage(data) {
   const div = document.createElement("div");
-  div.innerHTML = `<strong>${data.user}:</strong> ${data.text}`;
+
+  // Mensajes del sistema
+  if (data.system) {
+    div.style.color = "gray";
+    div.style.fontStyle = "italic";
+    div.textContent = data.text;
+  } else {
+    div.innerHTML = `<strong>${data.user}:</strong> ${data.text}`;
+  }
+
   messagesDiv.appendChild(div);
-  messagesDiv.scrollTop = messagesDiv.scrollHeight; // auto scroll
+  messagesDiv.scrollTop = messagesDiv.scrollHeight;
 }
 
 // =========================
@@ -53,7 +62,14 @@ loginBtn.addEventListener("click", () => {
       loginBtn.style.display = "none";
       chatDiv.style.display = "block";
 
-      // cargar historial
+      // 🔹 Registrar usuario en el BACKEND (socket)
+      socket.emit("registerUser", {
+        displayName: currentUser.displayName,
+        email: currentUser.email,
+        photoURL: currentUser.photoURL
+      });
+
+      // 🔹 cargar historial
       socket.emit("loadHistorial");
     })
     .catch(err => console.error("Error login:", err));
@@ -79,10 +95,17 @@ sendMessageButton.addEventListener("click", () => {
 });
 
 // =========================
-//  Recibir mensajes
+//  Recibir mensajes normales
 // =========================
 socket.on("mensaje", (data) => {
   showMessage(data);
+});
+
+// =========================
+//  Recibir mensajes del sistema
+// =========================
+socket.on("systemMessage", (text) => {
+  showMessage({ text, system: true });
 });
 
 // =========================

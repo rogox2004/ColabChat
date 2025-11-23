@@ -22,28 +22,58 @@ const db = admin.firestore();
 io.on("connection", (socket) => {
   console.log("Usuario conectado:", socket.id);
 
-  // Cargar historial
-  socket.on("loadHistorial", async () => {
-    const snapshot = await db.collection("messages")
-      .orderBy("timestamp", "asc")
-      .get();
+  // 🔹 1) Registrar usuario cuando se loguea en el frontend
+  // El frontend debe hacer: socket.emit("registerUser", { displayName, email, photo });
+  socket.on("registerUser", (user) => {
+    socket.user = user; // Guardamos los datos del usuario en el socket
+    console.log("Usuario autenticado en socket:", user.displayName);
 
-    const historial = snapshot.docs.map(doc => doc.data());
-    socket.emit("historial", historial);
+    // Avisar a todos que este usuario entró
+    io.emit("systemMessage", `${user.displayName} se ha unido al chat`);
   });
 
-  // Nuevo mensaje
+  // 🔹 2) Cargar historial desde Firestore
+  socket.on("loadHistorial", async () => {
+    try {
+      const snapshot = await db
+        .collection("messages")
+        .orderBy("timestamp", "asc")
+        .get();
+
+      const historial = snapshot.docs.map(doc => doc.data());
+      socket.emit("historial", historial);
+    } catch (err) {
+      console.error("Error cargando historial:", err);
+    }
+  });
+
+  // 🔹 3) Nuevo mensaje normal
   socket.on("mensaje", async (data) => {
-    const payload = {
-      text: data.text,
-      user: data.user,
-      photo: data.photo,
-      timestamp: admin.firestore.FieldValue.serverTimestamp()
-    };
+    try {
+      const payload = {
+        text: data.text,
+        user: data.user || (socket.user && socket.user.displayName) || "Anónimo",
+        photo: data.photo || (socket.user && socket.user.photoURL) || null,
+        timestamp: admin.firestore.FieldValue.serverTimestamp()
+      };
 
-    await db.collection("messages").add(payload);
+      await db.collection("messages").add(payload);
 
-    io.emit("mensaje", payload);
+      // Enviamos el mensaje a todos los clientes
+      io.emit("mensaje", payload);
+    } catch (err) {
+      console.error("Error guardando mensaje:", err);
+    }
+  });
+
+  // 🔹 4) Cuando el usuario se desconecta
+  socket.on("disconnect", () => {
+    console.log("Usuario desconectado:", socket.id);
+
+    if (socket.user && socket.user.displayName) {
+      // Avisamos a todos que este usuario salió del chat
+      io.emit("systemMessage", `${socket.user.displayName} ha salido del chat`);
+    }
   });
 });
 
